@@ -12,7 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/k773/wireguard-go/conn"
+	"golang.zx2c4.com/wireguard/conn"
 )
 
 type Peer struct {

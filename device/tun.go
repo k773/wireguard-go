@@ -8,7 +8,7 @@ package device
 import (
 	"fmt"
 
-	"github.com/k773/wireguard-go/tun"
+	"golang.zx2c4.com/wireguard/tun"
 )
 
 const DefaultMTU = 1420
