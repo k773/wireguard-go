@@ -60,8 +60,8 @@ const (
 )
 
 const (
-	MessageInitiationSize      = 148 + 7                                       // size of handshake initiation message
-	MessageResponseSize        = 92 + 7                                        // size of response message
+	MessageInitiationSize      = 148 + 7 - 7                                   // size of handshake initiation message
+	MessageResponseSize        = 92 + 7 - 7                                    // size of response message
 	MessageCookieReplySize     = 64                                            // size of cookie reply message
 	MessageTransportHeaderSize = 16                                            // size of data preceding content in transport message
 	MessageTransportSize       = MessageTransportHeaderSize + poly1305.TagSize // size of empty transport
@@ -82,37 +82,37 @@ const (
  */
 
 type MessageInitiation struct {
-	shit0     uint8
-	Type      uint32
-	shit1     uint8
-	Sender    uint32
-	shit2     uint8
+	//shit0     uint8
+	Type uint32
+	//shit1     uint8
+	Sender uint32
+	//shit2     uint8
 	Ephemeral NoisePublicKey
-	shit3     uint8
-	Static    [NoisePublicKeySize + poly1305.TagSize]byte
-	shit4     uint8
+	//shit3     uint8
+	Static [NoisePublicKeySize + poly1305.TagSize]byte
+	//shit4     uint8
 	Timestamp [tai64n.TimestampSize + poly1305.TagSize]byte
-	shit5     uint8
-	MAC1      [blake2s.Size128]byte
-	shit6     uint8
-	MAC2      [blake2s.Size128]byte
+	//shit5     uint8
+	MAC1 [blake2s.Size128]byte
+	//shit6     uint8
+	MAC2 [blake2s.Size128]byte
 }
 
 type MessageResponse struct {
-	shit0     uint8
-	Type      uint32
-	shit1     uint8
-	Sender    uint32
-	shit2     uint8
-	Receiver  uint32
-	shit3     uint8
+	//shit0     uint8
+	Type uint32
+	//shit1     uint8
+	Sender uint32
+	//shit2     uint8
+	Receiver uint32
+	//shit3     uint8
 	Ephemeral NoisePublicKey
-	shit4     uint8
-	Empty     [poly1305.TagSize]byte
-	shit5     uint8
-	MAC1      [blake2s.Size128]byte
-	shit6     uint8
-	MAC2      [blake2s.Size128]byte
+	//shit4     uint8
+	Empty [poly1305.TagSize]byte
+	//shit5     uint8
+	MAC1 [blake2s.Size128]byte
+	//shit6     uint8
+	MAC2 [blake2s.Size128]byte
 }
 
 type MessageTransport struct {
