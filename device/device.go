@@ -11,10 +11,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"golang.zx2c4.com/wireguard/conn"
-	"golang.zx2c4.com/wireguard/ratelimiter"
-	"golang.zx2c4.com/wireguard/rwcancel"
-	"golang.zx2c4.com/wireguard/tun"
+	"github.com/k773/wireguard-go/conn"
+	"github.com/k773/wireguard-go/ratelimiter"
+	"github.com/k773/wireguard-go/rwcancel"
+	"github.com/k773/wireguard-go/tun"
 )
 
 type Device struct {
@@ -92,10 +92,9 @@ type Device struct {
 // There are three states: down, up, closed.
 // Transitions:
 //
-//   down -----+
-//     ↑↓      ↓
-//     up -> closed
-//
+//	down -----+
+//	  ↑↓      ↓
+//	  up -> closed
 type deviceState uint32
 
 //go:generate go run golang.org/x/tools/cmd/stringer -type deviceState -trimprefix=deviceState

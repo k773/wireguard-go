@@ -11,11 +11,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"golang.zx2c4.com/wireguard/conn"
-	"golang.zx2c4.com/wireguard/device"
-	"golang.zx2c4.com/wireguard/ipc"
+	"github.com/k773/wireguard-go/conn"
+	"github.com/k773/wireguard-go/device"
+	"github.com/k773/wireguard-go/ipc"
 
-	"golang.zx2c4.com/wireguard/tun"
+	"github.com/k773/wireguard-go/tun"
 )
 
 const (

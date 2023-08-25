@@ -1,3 +1,4 @@
+//go:build load_wintun_from_rsrc
 // +build load_wintun_from_rsrc
 
 /* SPDX-License-Identifier: MIT
@@ -15,7 +16,7 @@ import (
 
 	"golang.org/x/sys/windows"
 
-	"golang.zx2c4.com/wireguard/tun/wintun/memmod"
+	"github.com/k773/wireguard-go/tun/wintun/memmod"
 )
 
 type lazyDLL struct {

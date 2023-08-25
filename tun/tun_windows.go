@@ -17,7 +17,7 @@ import (
 
 	"golang.org/x/sys/windows"
 
-	"golang.zx2c4.com/wireguard/tun/wintun"
+	"github.com/k773/wireguard-go/tun/wintun"
 )
 
 const (
@@ -55,18 +55,14 @@ func procyield(cycles uint32)
 //go:linkname nanotime runtime.nanotime
 func nanotime() int64
 
-//
 // CreateTUN creates a Wintun interface with the given name. Should a Wintun
 // interface with the same name exist, it is reused.
-//
 func CreateTUN(ifname string, mtu int) (Device, error) {
 	return CreateTUNWithRequestedGUID(ifname, WintunStaticRequestedGUID, mtu)
 }
 
-//
 // CreateTUNWithRequestedGUID creates a Wintun interface with the given name and
 // a requested GUID. Should a Wintun interface with the same name exist, it is reused.
-//
 func CreateTUNWithRequestedGUID(ifname string, requestedGUID *windows.GUID, mtu int) (Device, error) {
 	var err error
 	var wt *wintun.Adapter

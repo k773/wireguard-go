@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 /* SPDX-License-Identifier: MIT
@@ -21,8 +22,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/k773/wireguard-go/ipc/winpipe"
 	"golang.org/x/sys/windows"
-	"golang.zx2c4.com/wireguard/ipc/winpipe"
 )
 
 func randomPipePath() string {
