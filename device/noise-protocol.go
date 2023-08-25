@@ -15,7 +15,7 @@ import (
 	"golang.org/x/crypto/chacha20poly1305"
 	"golang.org/x/crypto/poly1305"
 
-	"golang.zx2c4.com/wireguard/tai64n"
+	"github.com/k773/wireguard-go/tai64n"
 )
 
 type handshakeState int
@@ -60,8 +60,8 @@ const (
 )
 
 const (
-	MessageInitiationSize      = 148                                           // size of handshake initiation message
-	MessageResponseSize        = 92                                            // size of response message
+	MessageInitiationSize      = 148 + 4                                       // size of handshake initiation message
+	MessageResponseSize        = 92 + 4                                        // size of response message
 	MessageCookieReplySize     = 64                                            // size of cookie reply message
 	MessageTransportHeaderSize = 16                                            // size of data preceding content in transport message
 	MessageTransportSize       = MessageTransportHeaderSize + poly1305.TagSize // size of empty transport
@@ -82,9 +82,13 @@ const (
  */
 
 type MessageInitiation struct {
+	shit0     byte
 	Type      uint32
+	shit1     byte
 	Sender    uint32
+	shit2     byte
 	Ephemeral NoisePublicKey
+	shit3     byte
 	Static    [NoisePublicKeySize + poly1305.TagSize]byte
 	Timestamp [tai64n.TimestampSize + poly1305.TagSize]byte
 	MAC1      [blake2s.Size128]byte
@@ -92,9 +96,13 @@ type MessageInitiation struct {
 }
 
 type MessageResponse struct {
+	shit0     byte
 	Type      uint32
+	shit1     byte
 	Sender    uint32
+	shit2     byte
 	Receiver  uint32
+	shit3     byte
 	Ephemeral NoisePublicKey
 	Empty     [poly1305.TagSize]byte
 	MAC1      [blake2s.Size128]byte
