@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"golang.org/x/crypto/blake2s"
@@ -53,20 +54,24 @@ const (
 )
 
 const (
-	MessageInitiationType  = 1
-	MessageResponseType    = 2
-	MessageCookieReplyType = 3
-	MessageTransportType   = 4
+	MessageInitiationType       = 1
+	MessageResponseType         = 2
+	MessageCookieReplyType      = 3
+	MessageTransportType        = 4
+	MessageInitiationCustomType = 5
+	MessageResponseCustomType   = 6
 )
 
 const (
-	MessageInitiationSize      = 148 + 7                                       // size of handshake initiation message
-	MessageResponseSize        = 92 + 7                                        // size of response message
-	MessageCookieReplySize     = 64                                            // size of cookie reply message
-	MessageTransportHeaderSize = 16                                            // size of data preceding content in transport message
-	MessageTransportSize       = MessageTransportHeaderSize + poly1305.TagSize // size of empty transport
-	MessageKeepaliveSize       = MessageTransportSize                          // size of keepalive
-	MessageHandshakeSize       = MessageInitiationSize                         // size of largest handshake related message
+	MessageInitiationSize       = 148                                           // size of handshake initiation message
+	MessageInitiationCustomSize = 148                                           // size of handshake initiation message
+	MessageResponseSize         = 92                                            // size of response message
+	MessageResponseCustomSize   = 92                                            // size of response message
+	MessageCookieReplySize      = 64                                            // size of cookie reply message
+	MessageTransportHeaderSize  = 16                                            // size of data preceding content in transport message
+	MessageTransportSize        = MessageTransportHeaderSize + poly1305.TagSize // size of empty transport
+	MessageKeepaliveSize        = MessageTransportSize                          // size of keepalive
+	MessageHandshakeSize        = MessageInitiationSize                         // size of largest handshake related message
 )
 
 const (
@@ -82,36 +87,22 @@ const (
  */
 
 type MessageInitiation struct {
-	shit0     uint8
 	Type      uint32
-	shit1     uint8
 	Sender    uint32
-	shit2     uint8
 	Ephemeral NoisePublicKey
-	shit3     uint8
 	Static    [NoisePublicKeySize + poly1305.TagSize]byte
-	shit4     uint8
 	Timestamp [tai64n.TimestampSize + poly1305.TagSize]byte
-	shit5     uint8
 	MAC1      [blake2s.Size128]byte
-	shit6     uint8
 	MAC2      [blake2s.Size128]byte
 }
 
 type MessageResponse struct {
-	shit0     uint8
 	Type      uint32
-	shit1     uint8
 	Sender    uint32
-	shit2     uint8
 	Receiver  uint32
-	shit3     uint8
 	Ephemeral NoisePublicKey
-	shit4     uint8
 	Empty     [poly1305.TagSize]byte
-	shit5     uint8
 	MAC1      [blake2s.Size128]byte
-	shit6     uint8
 	MAC2      [blake2s.Size128]byte
 }
 
@@ -144,6 +135,8 @@ type Handshake struct {
 	lastTimestamp             tai64n.Timestamp
 	lastInitiationConsumption time.Time
 	lastSentHandshake         time.Time
+
+	initMessageType uint32
 }
 
 var (
@@ -210,9 +203,21 @@ func (device *Device) CreateMessageInitiation(peer *Peer) (*MessageInitiation, e
 	handshake.mixHash(handshake.remoteStatic[:])
 
 	msg := MessageInitiation{
-		Type:      MessageInitiationType,
+		//Type:      MessageInitiationCustomType,
 		Ephemeral: handshake.localEphemeral.publicKey(),
 	}
+	// if the peer has completed the handshake at least once - use the same handshake type.
+	// if not - rotate the handshake type (support for the non-modified wireguard).
+	if atomic.LoadInt64(&peer.stats.lastHandshakeNano) != 0 {
+		msg.Type = peer.lastHandshakeInitType
+	} else {
+		if peer.lastHandshakeInitType == MessageInitiationCustomType {
+			msg.Type = MessageInitiationType
+		} else {
+			msg.Type = MessageInitiationCustomType
+		}
+	}
+	peer.lastHandshakeInitType = msg.Type
 
 	handshake.mixKey(msg.Ephemeral[:])
 	handshake.mixHash(msg.Ephemeral[:])
@@ -266,7 +271,7 @@ func (device *Device) ConsumeMessageInitiation(msg *MessageInitiation) *Peer {
 		chainKey [blake2s.Size]byte
 	)
 
-	if msg.Type != MessageInitiationType {
+	if !(msg.Type == MessageInitiationType || msg.Type == MessageInitiationCustomType) {
 		return nil
 	}
 
@@ -343,6 +348,7 @@ func (device *Device) ConsumeMessageInitiation(msg *MessageInitiation) *Peer {
 	// update handshake state
 
 	handshake.mutex.Lock()
+	handshake.initMessageType = msg.Type
 
 	handshake.hash = hash
 	handshake.chainKey = chainKey
@@ -385,6 +391,9 @@ func (device *Device) CreateMessageResponse(peer *Peer) (*MessageResponse, error
 
 	var msg MessageResponse
 	msg.Type = MessageResponseType
+	if handshake.initMessageType == MessageInitiationCustomType {
+		msg.Type = MessageResponseCustomType
+	}
 	msg.Sender = handshake.localIndex
 	msg.Receiver = handshake.remoteIndex
 
@@ -432,7 +441,7 @@ func (device *Device) CreateMessageResponse(peer *Peer) (*MessageResponse, error
 }
 
 func (device *Device) ConsumeMessageResponse(msg *MessageResponse) *Peer {
-	if msg.Type != MessageResponseType {
+	if !(msg.Type == MessageResponseType || msg.Type == MessageResponseCustomType) {
 		return nil
 	}
 

@@ -177,9 +177,13 @@ func (device *Device) RoutineReceiveIncoming(recv conn.ReceiveFunc) {
 
 		case MessageInitiationType:
 			okay = len(packet) == MessageInitiationSize
+		case MessageInitiationCustomType:
+			okay = len(packet) == MessageInitiationCustomSize
 
 		case MessageResponseType:
 			okay = len(packet) == MessageResponseSize
+		case MessageResponseCustomType:
+			okay = len(packet) == MessageResponseCustomSize
 
 		case MessageCookieReplyType:
 			okay = len(packet) == MessageCookieReplySize
@@ -278,7 +282,7 @@ func (device *Device) RoutineHandshake(id int) {
 
 			goto skip
 
-		case MessageInitiationType, MessageResponseType:
+		case MessageInitiationType, MessageInitiationCustomType, MessageResponseType, MessageResponseCustomType:
 
 			// check mac fields and maybe ratelimit
 
@@ -313,8 +317,7 @@ func (device *Device) RoutineHandshake(id int) {
 		// handle handshake initiation/response content
 
 		switch elem.msgType {
-		case MessageInitiationType:
-
+		case MessageInitiationType, MessageInitiationCustomType:
 			// unmarshal
 
 			var msg MessageInitiation
@@ -341,12 +344,12 @@ func (device *Device) RoutineHandshake(id int) {
 			// update endpoint
 			peer.SetEndpointFromPacket(elem.endpoint)
 
-			device.log.Verbosef("%v - Received handshake initiation", peer)
+			device.log.Verbosef("%v - Received handshake initiation, type: %v", peer, msg.Type)
 			atomic.AddUint64(&peer.stats.rxBytes, uint64(len(elem.packet)))
 
 			peer.SendHandshakeResponse()
 
-		case MessageResponseType:
+		case MessageResponseType, MessageResponseCustomType:
 
 			// unmarshal
 
@@ -369,7 +372,7 @@ func (device *Device) RoutineHandshake(id int) {
 			// update endpoint
 			peer.SetEndpointFromPacket(elem.endpoint)
 
-			device.log.Verbosef("%v - Received handshake response", peer)
+			device.log.Verbosef("%v - Received handshake response, type: %v", peer, msg.Type)
 			atomic.AddUint64(&peer.stats.rxBytes, uint64(len(elem.packet)))
 
 			// update timers
